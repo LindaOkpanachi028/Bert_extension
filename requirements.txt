@@ -1,0 +1,6 @@
+Flask==3.0.3
+gunicorn==21.2.0
+transformers==4.46.0
+torch==2.0.1
+pandas==2.0.2
+numpy==2.0.2
