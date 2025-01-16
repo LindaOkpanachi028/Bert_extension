@@ -1,12 +1,16 @@
 from flask import Flask, request, jsonify
 import torch
 from transformers import BertTokenizer, BertForSequenceClassification
+import os
 
 # Initialize Flask app
 app = Flask(__name__)
 
+# Set the environment (default to production)
+app.config['ENV'] = os.getenv('FLASK_ENV', 'production')
+
 # Load the fine-tuned model and tokenizer
-model_path = "./finetuned_model"  # Update this to your actual model directory
+model_path = os.getenv('MODEL_PATH', "./finetuned_model")  # Use environment variable for model path
 model = BertForSequenceClassification.from_pretrained(model_path)
 tokenizer = BertTokenizer.from_pretrained(model_path)
 
@@ -23,7 +27,8 @@ label_mapping = {0: "false", 1: "true", 2: "misleading"}
 def home():
     return jsonify({
         "message": "Welcome to the BERT Fine-tuned Model API!",
-        "instructions": "Use the /predict endpoint with a POST request to classify text."
+        "instructions": "Use the /predict endpoint with a POST request to classify text.",
+        "environment": app.config['ENV']
     })
 
 # Define route for prediction
@@ -59,7 +64,7 @@ def predict():
         # Prepare response
         response = {
             "text": text,
-            "predicted_label": predicted_label,  # Predicted label in human-readable form
+            "predicted_label": predicted_label,
             "probabilities": {
                 "false": probabilities_percentage[0],
                 "true": probabilities_percentage[1],
@@ -73,4 +78,8 @@ def predict():
 
 # Run Flask app
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # Host and port are configurable with environment variables
+    host = os.getenv('HOST', '0.0.0.0')
+    port = int(os.getenv('PORT', 5000))
+    debug_mode = app.config['ENV'] == 'development'
+    app.run(host=host, port=port, debug=debug_mode)
